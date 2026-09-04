@@ -78,7 +78,7 @@ export async function removeCronJobBaseSession(params: {
   const sessionId = existing.sessionId;
   if (sessionId) {
     const { resolveSessionWorkerPlacementContext } = await import(
-      "../gateway/session-worker-placement-context.js"
+      "../gateway/session-worker-placement-context.js",
     );
     const placement = resolveSessionWorkerPlacementContext().workerSessionPlacementService
       ?.getMany([sessionId])
