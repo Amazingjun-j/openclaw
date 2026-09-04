@@ -8,9 +8,7 @@ import {
 } from "../gateway/gateway.test-support.js";
 import { startGatewayServer } from "../gateway/server.js";
 import { getGatewayE2ePortBlock } from "../gateway/test-helpers.e2e.js";
-import {
-  createWorkerSessionPlacementStore,
-} from "../gateway/worker-environments/placement-store.js";
+import { createWorkerSessionPlacementStore } from "../gateway/worker-environments/placement-store.js";
 import { beginSessionWorkAdmission } from "../sessions/session-lifecycle-admission.js";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
 import { removeCronJobBaseSession } from "./session-reaper.js";
