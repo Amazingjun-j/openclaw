@@ -1,3 +1,4 @@
+import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   loadExactSessionEntry,
@@ -34,7 +35,7 @@ describe("removeCronJobBaseSession worker placement", () => {
 
   it("delegates placement-owned base sessions to the gateway deletion lifecycle", async () => {
     const { storePath } = await makeStorePath();
-    const sessionStorePath = storePath.replace(/cron[^/\\]*$/u, "sessions.json");
+    const sessionStorePath = path.join(path.dirname(storePath), "sessions.json");
     const sessionKey = "agent:main:cron:placed-job";
     await replaceSessionEntry(
       { agentId: "main", storePath: sessionStorePath, sessionKey },
@@ -65,7 +66,7 @@ describe("removeCronJobBaseSession worker placement", () => {
 
   it("keeps direct lifecycle removal for base sessions without a worker placement", async () => {
     const { storePath } = await makeStorePath();
-    const sessionStorePath = storePath.replace(/cron[^/\\]*$/u, "sessions.json");
+    const sessionStorePath = path.join(path.dirname(storePath), "sessions.json");
     const sessionKey = "agent:main:cron:local-job";
     await replaceSessionEntry(
       { agentId: "main", storePath: sessionStorePath, sessionKey },
