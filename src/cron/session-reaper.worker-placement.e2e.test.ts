@@ -1,19 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  loadExactSessionEntry,
-  replaceSessionEntry,
-} from "../config/sessions/session-accessor.js";
 import { resolveDefaultSessionStorePath } from "../config/sessions/paths.js";
-import { beginSessionWorkAdmission } from "../sessions/session-lifecycle-admission.js";
-import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
+import { loadExactSessionEntry, replaceSessionEntry } from "../config/sessions/session-accessor.js";
 import {
   removeGatewayTempHome,
   resetGatewayTestState,
   setupGatewayTempHome,
 } from "../gateway/gateway.test-support.js";
-import { getGatewayE2ePortBlock } from "../gateway/test-helpers.e2e.js";
 import { startGatewayServer } from "../gateway/server.js";
+import { getGatewayE2ePortBlock } from "../gateway/test-helpers.e2e.js";
 import { createWorkerSessionPlacementStore } from "../gateway/worker-environments/placement-store.js";
+import { beginSessionWorkAdmission } from "../sessions/session-lifecycle-admission.js";
+import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
 import { removeCronJobBaseSession } from "./session-reaper.js";
 
 describe("removeCronJobBaseSession gateway worker-placement lifecycle", () => {
