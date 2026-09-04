@@ -9,7 +9,6 @@ import {
 } from "../config/sessions/session-accessor.js";
 import { resolveMaintenanceConfig } from "../config/sessions/store-maintenance-runtime.js";
 import type { CronConfig } from "../config/types.cron.js";
-import { resolveSessionWorkerPlacementContext } from "../gateway/session-worker-placement-context.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { normalizeAgentId, parseAgentSessionKey } from "../routing/session-key.js";
 import { isCronRunSessionKey } from "../sessions/session-key-utils.js";
@@ -77,18 +76,21 @@ export async function removeCronJobBaseSession(params: {
     return false;
   }
   const sessionId = existing.sessionId;
-  const placement = sessionId
-    ? resolveSessionWorkerPlacementContext().workerSessionPlacementService
-        ?.getMany([sessionId])
-        .get(sessionId)
-    : undefined;
-  if (placement && sessionId) {
-    return await deleteCronSessionViaGateway({
-      agentSessionKey: sessionKey,
-      sessionId,
-      lifecycleRevision: existing.lifecycleRevision,
-      sessionUpdatedAt: existing.updatedAt,
-    });
+  if (sessionId) {
+    const { resolveSessionWorkerPlacementContext } = await import(
+      "../gateway/session-worker-placement-context.js"
+    );
+    const placement = resolveSessionWorkerPlacementContext().workerSessionPlacementService
+      ?.getMany([sessionId])
+      .get(sessionId);
+    if (placement) {
+      return await deleteCronSessionViaGateway({
+        agentSessionKey: sessionKey,
+        sessionId,
+        lifecycleRevision: existing.lifecycleRevision,
+        sessionUpdatedAt: existing.updatedAt,
+      });
+    }
   }
   const result = await applySessionEntryLifecycleMutation({
     agentId: params.agentId,
