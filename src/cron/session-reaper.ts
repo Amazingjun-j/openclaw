@@ -76,15 +76,16 @@ export async function removeCronJobBaseSession(params: {
   if (!existing) {
     return false;
   }
-  const placement = existing.sessionId
+  const sessionId = existing.sessionId;
+  const placement = sessionId
     ? resolveSessionWorkerPlacementContext().workerSessionPlacementService
-        ?.getMany([existing.sessionId])
-        .get(existing.sessionId)
+        ?.getMany([sessionId])
+        .get(sessionId)
     : undefined;
-  if (placement) {
+  if (placement && sessionId) {
     return await deleteCronSessionViaGateway({
       agentSessionKey: sessionKey,
-      sessionId: existing.sessionId!,
+      sessionId,
       lifecycleRevision: existing.lifecycleRevision,
       sessionUpdatedAt: existing.updatedAt,
     });
