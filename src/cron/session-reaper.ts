@@ -80,8 +80,8 @@ export async function removeCronJobBaseSession(params: {
     const { resolveSessionWorkerPlacementContext } = await import(
       "../gateway/session-worker-placement-context.js",
     );
-    const placement = resolveSessionWorkerPlacementContext().workerSessionPlacementService
-      ?.getMany([sessionId])
+    const placement = resolveSessionWorkerPlacementContext()
+      .workerSessionPlacementService?.getMany([sessionId])
       .get(sessionId);
     if (placement) {
       return await deleteCronSessionViaGateway({
