@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   getMany: vi.fn(),
 }));
 
-vi.mock("../gateway/session-worker-placement-context.js", () => ({
+vi.mock("./session-worker-placement.runtime.js", () => ({
   resolveSessionWorkerPlacementContext: () => ({
     workerSessionPlacementService: { getMany: mocks.getMany },
   }),
