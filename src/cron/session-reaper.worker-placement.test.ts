@@ -1,9 +1,6 @@
 import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  loadExactSessionEntry,
-  replaceSessionEntry,
-} from "../config/sessions/session-accessor.js";
+import { loadExactSessionEntry, replaceSessionEntry } from "../config/sessions/session-accessor.js";
 import { setupCronServiceSuite } from "./service.test-harness.js";
 
 const mocks = vi.hoisted(() => ({
@@ -62,6 +59,35 @@ describe("removeCronJobBaseSession worker placement", () => {
       sessionUpdatedAt: existing.updatedAt,
     });
     expect(loadExactSessionEntry({ storePath: sessionStorePath, sessionKey })).toBeDefined();
+  });
+
+  it("preserves placement ownership when the gateway rejects a raced deletion", async () => {
+    const { storePath } = await makeStorePath();
+    const sessionStorePath = path.join(path.dirname(storePath), "sessions.json");
+    const sessionKey = "agent:main:cron:raced-job";
+    await replaceSessionEntry(
+      { agentId: "main", storePath: sessionStorePath, sessionKey },
+      { sessionId: "raced-session", updatedAt: 234 },
+    );
+    mocks.getMany.mockReturnValue(
+      new Map([["raced-session", { sessionId: "raced-session", state: "active" }]]),
+    );
+    // A rejected Gateway delete can mean placement generation moved while an in-flight run
+    // was settling. Direct store removal here would bypass that lifecycle fence.
+    mocks.deleteCronSessionViaGateway.mockResolvedValue(false);
+
+    await expect(
+      removeCronJobBaseSession({
+        agentId: "main",
+        jobId: "raced-job",
+        sessionStorePath,
+      }),
+    ).resolves.toBe(false);
+
+    expect(mocks.deleteCronSessionViaGateway).toHaveBeenCalledTimes(1);
+    expect(loadExactSessionEntry({ storePath: sessionStorePath, sessionKey })).toMatchObject({
+      entry: { sessionId: "raced-session" },
+    });
   });
 
   it("keeps direct lifecycle removal for base sessions without a worker placement", async () => {
