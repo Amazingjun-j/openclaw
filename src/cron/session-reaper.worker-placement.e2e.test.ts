@@ -10,6 +10,7 @@ import { startGatewayServer } from "../gateway/server.js";
 import { getGatewayE2ePortBlock } from "../gateway/test-helpers.e2e.js";
 import { createWorkerSessionPlacementStore } from "../gateway/worker-environments/placement-store.js";
 import { beginSessionWorkAdmission } from "../sessions/session-lifecycle-admission.js";
+import { closeOpenClawAgentDatabasesForTest } from "../state/openclaw-agent-db.js";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
 import { removeCronJobBaseSession } from "./session-reaper.js";
 
@@ -22,6 +23,7 @@ describe("removeCronJobBaseSession gateway worker-placement lifecycle", () => {
   });
 
   afterEach(async () => {
+    closeOpenClawAgentDatabasesForTest();
     closeOpenClawStateDatabaseForTest();
     resetGatewayTestState();
     if (tempHome) {
@@ -93,9 +95,9 @@ describe("removeCronJobBaseSession gateway worker-placement lifecycle", () => {
       expect(storedSession?.entry.sessionId).toBe(sessionId);
       expect(placementStore.get(sessionId)?.turnClaim?.claimId).toBe(`${sessionId}-claim`);
 
-      await expect(
-        removeCronJobBaseSession({ agentId, jobId, sessionStorePath }),
-      ).resolves.toBe(true);
+      await expect(removeCronJobBaseSession({ agentId, jobId, sessionStorePath })).resolves.toBe(
+        true,
+      );
 
       expect(events).toEqual(["admission:interrupt", "claim:released"]);
       expect(loadExactSessionEntry({ storePath: sessionStorePath, sessionKey })).toBeUndefined();

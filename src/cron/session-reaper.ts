@@ -77,19 +77,12 @@ export async function removeCronJobBaseSession(params: {
   }
   const sessionId = existing.sessionId;
   if (sessionId) {
-    const { resolveSessionWorkerPlacementContext } =
-      await import("./session-worker-placement.runtime.js");
-    const placement = resolveSessionWorkerPlacementContext()
-      .workerSessionPlacementService?.getMany([sessionId])
-      .get(sessionId);
-    if (placement) {
-      return await deleteCronSessionViaGateway({
-        agentSessionKey: sessionKey,
-        sessionId,
-        lifecycleRevision: existing.lifecycleRevision,
-        sessionUpdatedAt: existing.updatedAt,
-      });
-    }
+    return await deleteCronSessionViaGateway({
+      agentSessionKey: sessionKey,
+      sessionId,
+      lifecycleRevision: existing.lifecycleRevision,
+      sessionUpdatedAt: existing.updatedAt,
+    });
   }
   const result = await applySessionEntryLifecycleMutation({
     agentId: params.agentId,
