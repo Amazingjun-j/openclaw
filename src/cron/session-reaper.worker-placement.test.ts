@@ -82,13 +82,13 @@ describe("removeCronJobBaseSession worker placement", () => {
     });
   });
 
-  it("keeps direct lifecycle removal only for sessions without a session id", async () => {
+  it("keeps direct lifecycle removal only for sessions without a usable session id", async () => {
     const { storePath } = await makeStorePath();
     const sessionStorePath = path.join(path.dirname(storePath), "sessions.json");
     const sessionKey = "agent:main:cron:local-job";
     await replaceSessionEntry(
       { agentId: "main", storePath: sessionStorePath, sessionKey },
-      { updatedAt: 456 },
+      { sessionId: "", updatedAt: 456 },
     );
 
     await expect(
