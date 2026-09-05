@@ -169,7 +169,9 @@ describe("removeCronJobBaseSession gateway worker-placement lifecycle", () => {
         }),
       ).rejects.toThrow(/changed before deletion/i);
 
-      expect(loadExactSessionEntry({ storePath: sessionStorePath, sessionKey })?.entry).toMatchObject({
+      expect(
+        loadExactSessionEntry({ storePath: sessionStorePath, sessionKey })?.entry,
+      ).toMatchObject({
         sessionId,
         updatedAt: successorUpdatedAt,
       });
