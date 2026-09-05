@@ -12,6 +12,7 @@ import { createWorkerSessionPlacementStore } from "../gateway/worker-environment
 import { beginSessionWorkAdmission } from "../sessions/session-lifecycle-admission.js";
 import { closeOpenClawAgentDatabasesForTest } from "../state/openclaw-agent-db.js";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
+import { deleteCronSessionViaGateway } from "./isolated-agent/session-cleanup.js";
 import { removeCronJobBaseSession } from "./session-reaper.js";
 
 describe("removeCronJobBaseSession gateway worker-placement lifecycle", () => {
@@ -109,6 +110,74 @@ describe("removeCronJobBaseSession gateway worker-placement lifecycle", () => {
       admission.release();
     } finally {
       await server.close({ reason: "cron placement lifecycle proof complete" });
+    }
+  });
+
+  it("preserves successor session and placement when real gateway guard rejects deletion", async () => {
+    const setup = await setupGatewayTempHome({
+      prefix: "openclaw-cron-placement-guard-gateway-",
+      minimalGateway: true,
+    });
+    tempHome = setup.tempHome;
+    restoreEnv = () => setup.envSnapshot.restore();
+
+    const port = await getGatewayE2ePortBlock();
+    const token = "cron-placement-guard-gateway-test-token";
+    process.env.OPENCLAW_GATEWAY_PORT = String(port);
+    process.env.OPENCLAW_GATEWAY_TOKEN = token;
+
+    const server = await startGatewayServer(port, {
+      bind: "loopback",
+      auth: { mode: "token", token },
+      controlUiEnabled: false,
+      sidecarStartup: "defer",
+    });
+
+    const agentId = "main";
+    const jobId = "gateway-guard-proof-job";
+    const sessionKey = `agent:${agentId}:cron:${jobId}`;
+    const sessionId = "gateway-guard-proof-session";
+    const sessionStorePath = resolveDefaultSessionStorePath(agentId);
+    const placementStore = createWorkerSessionPlacementStore();
+    const originalUpdatedAt = 1_000;
+    const successorUpdatedAt = 2_000;
+
+    try {
+      await replaceSessionEntry(
+        { agentId, storePath: sessionStorePath, sessionKey },
+        { sessionId, updatedAt: originalUpdatedAt },
+      );
+      const claim = placementStore.claimTurn({
+        sessionId,
+        agentId,
+        sessionKey,
+        owner: { kind: "local" },
+        claimId: `${sessionId}-claim`,
+        runId: `${sessionId}-run`,
+      });
+
+      await replaceSessionEntry(
+        { agentId, storePath: sessionStorePath, sessionKey },
+        { sessionId, updatedAt: successorUpdatedAt },
+      );
+
+      await expect(
+        deleteCronSessionViaGateway({
+          agentSessionKey: sessionKey,
+          sessionId,
+          sessionUpdatedAt: originalUpdatedAt,
+        }),
+      ).rejects.toThrow(/changed before deletion/i);
+
+      expect(loadExactSessionEntry({ storePath: sessionStorePath, sessionKey })?.entry).toMatchObject({
+        sessionId,
+        updatedAt: successorUpdatedAt,
+      });
+      expect(placementStore.get(sessionId)?.turnClaim?.claimId).toBe(`${sessionId}-claim`);
+
+      placementStore.releaseTurn(claim);
+    } finally {
+      await server.close({ reason: "cron placement guard proof complete" });
     }
   });
 });
