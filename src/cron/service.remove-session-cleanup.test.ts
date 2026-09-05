@@ -68,9 +68,7 @@ gatewayTestState.callGateway.mockImplementation(
           sessionKey: key,
           expectedEntry: existing,
           expectedSessionId,
-          ...(typeof expectedLifecycleRevision === "string"
-            ? { expectedLifecycleRevision }
-            : {}),
+          ...(typeof expectedLifecycleRevision === "string" ? { expectedLifecycleRevision } : {}),
           ...(typeof expectedSessionUpdatedAt === "number"
             ? { expectedUpdatedAt: expectedSessionUpdatedAt }
             : {}),
