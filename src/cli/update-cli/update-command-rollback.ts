@@ -294,10 +294,9 @@ export async function rollbackFailedUpdate(params: {
     }
     failureReason = "restart-unhealthy";
     let verifiedAtMs: number | undefined;
-    const healthy = await maybeRestartService({
+    const restartOutcome = await maybeRestartService({
       shouldRestart: true,
       result,
-      channel: "stable",
       opts,
       refreshServiceEnv: false,
       serviceUpdateVerdict: verdict,
@@ -314,6 +313,7 @@ export async function rollbackFailedUpdate(params: {
         verifiedAtMs = at;
       },
     });
+    const healthy = restartOutcome === "ok";
     return {
       result: {
         ...result,
