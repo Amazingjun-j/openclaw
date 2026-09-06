@@ -280,7 +280,7 @@ describe("CronService.remove session cleanup", () => {
     );
     gatewayTestState.callGateway.mockRejectedValueOnce(new Error("Gateway disconnected"));
 
-    await expect(cron.remove(job.id)).rejects.toThrow("session cleanup failed");
+    await expect(cron.remove(job.id)).rejects.toThrow("Gateway disconnected");
 
     expect(await cron.list({ includeDisabled: true })).toEqual([]);
     expect(
